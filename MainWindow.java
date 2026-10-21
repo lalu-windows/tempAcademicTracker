@@ -39,13 +39,8 @@ public class MainWindow {
 
 		}
 
-
-	public static void createGUI(){
-		// create a window (adjusting window size here)
-		JFrame frame = new JFrame("My first window");
-		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		frame.setSize(1280,720);
-		frame.setLocationRelativeTo(null);
+	public class AttenGUI extends JPanel{
+	public AttenGUI(){
 
 		// the main window we will be dealing with
 		JPanel mainPanel = new JPanel();
@@ -78,17 +73,61 @@ public class MainWindow {
 
 		//adding the subject panel to mainpanel:
 		mainPanel.add(subjectPanel,BorderLayout.CENTER);
+		add(mainPanel);
+
+	}
+}
 
 
+public class GradeGUI extends JPanel{
+	public GradeGUI(){
 
-
-
-		frame.add(mainPanel);
-		frame.setVisible(true);
 	}
 
-
-public static void main(String[] args){
-	createGUI();
+	
 }
+public class MainFrame extends JFrame {
+
+	public MainFrame(){
+		setTitle("Academic Tracker");
+		setSize(1280,720);
+		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		setLocationRelativeTo(null);
+                //need an explanation on this cardlayout paired with jpanel
+		CardLayout cardlay = new CardLayout();
+		JPanel cardpan = new JPanel(cardlay);
+
+		//creating attengui and gradgui instances:
+		AttenGUI attenpage = new AttenGUI();
+		GradeGUI gradepage = new GradeGUI();
+
+		//adding pages to the card cardpan:
+		cardpan.add(attenpage,"ATTENDANCE");
+		cardpan.add(gradepage,"GRADE");
+
+
+		//buttons for navigation:
+		JPanel btnpan = new JPanel();
+		JButton attenbtn = new JButton("Attendance");
+		JButton gradebtn = new JButton("Grade");
+
+		attenbtn.addActionListener(e-> {cardlay.show(cardpan,"ATTENDANCE");});
+		gradebtn.addActionListener(e-> {cardlay.show(cardpan,"GRADE");});
+
+		btnpan.add(attenbtn);
+		btnpan.add(gradebtn);
+		add(btnpan,BorderLayout.NORTH);
+		add(cardpan,BorderLayout.CENTER);
+		
+
+}
+}
+//main function
+public void main(String[] args){
+	SwingUtilities.invokeLater(() -> {
+            new MainFrame().setVisible(true);
+        });
+	
+     }
+
 }
