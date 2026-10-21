@@ -1,133 +1,165 @@
 import javax.swing.*;
 import java.awt.*;
 
-
 public class MainWindow {
-		public static JPanel subrow(String subject,int percentage){
-			JPanel subPanel = new JPanel(new BorderLayout(10,10));
-			subPanel.setPreferredSize(new Dimension(600,25));
-			subPanel.setMaximumSize(new Dimension(600,25));
-			subPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-			//name of the subject
-			JLabel subjectName = new JLabel(subject);
-			subjectName.setPreferredSize(new Dimension(130,25));
-			subjectName.setFont(new Font("Arial",Font.BOLD,15));
-			
+	// the row builder
+	public static JPanel subrow(String subject, int attended, int total){
+		int percentage = (int)(((double) attended / total) * 100);
 
+		JPanel subPanel = new JPanel(new BorderLayout(10,10));
+		subPanel.setPreferredSize(new Dimension(600,25));
+		subPanel.setMaximumSize(new Dimension(600,25));
+		subPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-			//progress bar for that subject:
-			JProgressBar bar = new JProgressBar(0,100);
-			bar.setValue(percentage);
-			bar.setStringPainted(true);
-			bar.setString(percentage + "%");
-			bar.setPreferredSize(new Dimension(130,25));
-			bar.setMaximumSize(new Dimension(130,25));
+		JLabel subjectName = new JLabel(subject);
+		subjectName.setPreferredSize(new Dimension(130,25));
+		subjectName.setFont(new Font("Arial", Font.BOLD, 15));
 
+		JProgressBar bar = new JProgressBar(0,100);
+		bar.setValue(percentage);
+		bar.setStringPainted(true);
+		bar.setString(percentage + "%");
 
+		JLabel ratio = new JLabel(attended + "/" + total);
+		ratio.setPreferredSize(new Dimension(60,25));
 
-			//attendance int:
-			JLabel ratio = new JLabel(String.valueOf(percentage));
+		subPanel.add(subjectName, BorderLayout.WEST);
+		subPanel.add(bar, BorderLayout.CENTER);
+		subPanel.add(ratio, BorderLayout.EAST);
 
+		return subPanel;
+	}
 
-			//adding name and bar to the subpanel
-			subPanel.add(subjectName,BorderLayout.WEST);
-			subPanel.add(bar,BorderLayout.CENTER);
-			subPanel.add(ratio,BorderLayout.EAST);
+	// ---------- Attendance page ----------
+	static class AttenGUI extends JPanel {
 
-			return subPanel;
+		// data and the panel that holds the rows are fields so refresh() can reach them
+		private final String[] subjects = {"TOC","OOP","MATHS","DSA","DE&LD","ETHICS"};
+		private final int[] attended = {35,20,32,25,28,25};
+		private final int[] tot = {40,38,40,35,34,35};
+		private final JPanel subjectPanel = new JPanel();
+
+		public AttenGUI(){
+			setLayout(new BorderLayout(10,10));
+			setBorder(BorderFactory.createEmptyBorder(15,15,15,15));
+
+			JLabel titlelabel = new JLabel("Attendance tracker", JLabel.CENTER);
+			titlelabel.setFont(new Font("Inter", Font.BOLD, 25));
+			add(titlelabel, BorderLayout.NORTH);
+
+			subjectPanel.setLayout(new BoxLayout(subjectPanel, BoxLayout.Y_AXIS));
+			add(subjectPanel, BorderLayout.CENTER);
+
+			add(buildUpdatePanel(), BorderLayout.SOUTH);
+
+			refresh(); // first draw
+		}
+
+		// redraws subjectpanel
+		public void refresh(){
+			subjectPanel.removeAll();
+
+			subjectPanel.add(Box.createVerticalGlue());
+			for(int i = 0; i < subjects.length; i++){
+				subjectPanel.add(subrow(subjects[i], attended[i], tot[i]));
+				subjectPanel.add(Box.createRigidArea(new Dimension(0,8)));
+			}
+			subjectPanel.add(Box.createVerticalGlue());
 
 		}
 
-	public class AttenGUI extends JPanel{
-	public AttenGUI(){
+		// Update attendance section
+		private JPanel buildUpdatePanel(){
+			JPanel updatepan = new JPanel(new FlowLayout(FlowLayout.LEFT,10,10));
+			updatepan.setBorder(BorderFactory.createTitledBorder("Update attendance"));
 
-		// the main window we will be dealing with
-		JPanel mainPanel = new JPanel();
-		mainPanel.setLayout(new BorderLayout(10,10));
-		mainPanel.setBorder(BorderFactory.createEmptyBorder(15,15,15,15));
-		//title label
-		JLabel titlelabel = new JLabel("Attendance tracker",JLabel.CENTER);
-		titlelabel.setFont(new Font("Inter",Font.BOLD,25));
-		mainPanel.add(titlelabel,BorderLayout.NORTH);
-		//subject panel
-		JPanel subjectPanel = new JPanel();
-		subjectPanel.setLayout(new BoxLayout(subjectPanel, BoxLayout.Y_AXIS));
+			JComboBox<String> subjectdrop = new JComboBox<>(subjects);
+			JTextField attenfield = new JTextField(4);
+			JTextField totfield = new JTextField(4);
+			JButton updatebtn = new JButton("Update");
 
+			// autofill the text fields when a subject is selected
+			subjectdrop.addActionListener(e -> {
+				int index = subjectdrop.getSelectedIndex();
+				attenfield.setText(String.valueOf(attended[index]));
+				totfield.setText(String.valueOf(tot[index]));
+			});
+			subjectdrop.setSelectedIndex(0);
 
+			updatebtn.addActionListener(e -> {
+				int index = subjectdrop.getSelectedIndex();
+				try{
+					int atten = Integer.parseInt(attenfield.getText().trim());
+					int newtot = Integer.parseInt(totfield.getText().trim());
 
-//--- RAW DATA------------------------------------------
-		String[] subjects = {"TOC","OOP","MATHS","DSA","DE&LD","ETHICS"};
-		int[] percentages = {85,70,92,95,78,65};
-// ---------------------------------------------------
+					if(atten < 0 || newtot <= 0){
+						JOptionPane.showMessageDialog(this, "Values must be positive", "Error", JOptionPane.ERROR_MESSAGE);
+						return;
+					}
+					if(atten > newtot){
+						JOptionPane.showMessageDialog(this, "Attended cannot be greater than total", "Error", JOptionPane.ERROR_MESSAGE);
+						return;
+					}
 
+					attended[index] = atten;
+					tot[index] = newtot;
 
+					refresh(); // redraw with the new numbers
+				}
+				catch(NumberFormatException ex){
+					JOptionPane.showMessageDialog(this, "Please enter valid numbers!", "Error", JOptionPane.ERROR_MESSAGE);
+				}
+			});
 
-			//loop to display percentages
-		for(int i =0; i<subjects.length;i++){
-			subjectPanel.add(subrow(subjects[i],percentages[i]));
-			subjectPanel.add(Box.createRigidArea(new Dimension(0,8)));
+			updatepan.add(new JLabel("Subject: "));
+			updatepan.add(subjectdrop);
+			updatepan.add(new JLabel("Attended: "));
+			updatepan.add(attenfield);
+			updatepan.add(new JLabel("Total: "));
+			updatepan.add(totfield);
+			updatepan.add(updatebtn);
+
+			return updatepan;
 		}
-
-
-
-		//adding the subject panel to mainpanel:
-		mainPanel.add(subjectPanel,BorderLayout.CENTER);
-		add(mainPanel);
-
-	}
-}
-
-
-public class GradeGUI extends JPanel{
-	public GradeGUI(){
-
 	}
 
-	
-}
-public class MainFrame extends JFrame {
+	// grade gui
+	static class GradeGUI extends JPanel {
+		public GradeGUI(){
+			setLayout(new BorderLayout());
+			add(new JLabel("Grades coming soon", JLabel.CENTER), BorderLayout.CENTER);
+		}
+	}
 
-	public MainFrame(){
-		setTitle("Academic Tracker");
-		setSize(1280,720);
-		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		setLocationRelativeTo(null);
-                //need an explanation on this cardlayout paired with jpanel
-		CardLayout cardlay = new CardLayout();
-		JPanel cardpan = new JPanel(cardlay);
+	// ---------- Main frame ----------
+	static class MainFrame extends JFrame {
+		public MainFrame(){
+			setTitle("Academic Tracker");
+			setSize(1280,720);
+			setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+			setLocationRelativeTo(null);
 
-		//creating attengui and gradgui instances:
-		AttenGUI attenpage = new AttenGUI();
-		GradeGUI gradepage = new GradeGUI();
+			CardLayout cardlay = new CardLayout();
+			JPanel cardpan = new JPanel(cardlay);
 
-		//adding pages to the card cardpan:
-		cardpan.add(attenpage,"ATTENDANCE");
-		cardpan.add(gradepage,"GRADE");
+			cardpan.add(new AttenGUI(), "ATTENDANCE");
+			cardpan.add(new GradeGUI(), "GRADE");
 
+			JPanel btnpan = new JPanel();
+			JButton attenbtn = new JButton("Attendance");
+			JButton gradebtn = new JButton("Grade");
+			attenbtn.addActionListener(e -> cardlay.show(cardpan, "ATTENDANCE"));
+			gradebtn.addActionListener(e -> cardlay.show(cardpan, "GRADE"));
+			btnpan.add(attenbtn);
+			btnpan.add(gradebtn);
 
-		//buttons for navigation:
-		JPanel btnpan = new JPanel();
-		JButton attenbtn = new JButton("Attendance");
-		JButton gradebtn = new JButton("Grade");
+			add(btnpan, BorderLayout.NORTH);
+			add(cardpan, BorderLayout.CENTER);
+		}
+	}
 
-		attenbtn.addActionListener(e-> {cardlay.show(cardpan,"ATTENDANCE");});
-		gradebtn.addActionListener(e-> {cardlay.show(cardpan,"GRADE");});
-
-		btnpan.add(attenbtn);
-		btnpan.add(gradebtn);
-		add(btnpan,BorderLayout.NORTH);
-		add(cardpan,BorderLayout.CENTER);
-		
-
-}
-}
-//main function
-public void main(String[] args){
-	SwingUtilities.invokeLater(() -> {
-            new MainFrame().setVisible(true);
-        });
-	
-     }
-
+	public static void main(String[] args){
+		SwingUtilities.invokeLater(() -> new MainFrame().setVisible(true));
+	}
 }
